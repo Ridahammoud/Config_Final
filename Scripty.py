@@ -147,4 +147,4 @@ if fichier_principal is not None:
     
     # Option pour afficher toutes les données
     if st.checkbox("Afficher toutes les données"):
-        st.dataframe(df_principal
+        st.dataframe(df_principal)  # Parenthèse fermée correctement ici
