@@ -122,4 +122,17 @@ if fichier_principal is not None:
         
         # Téléchargement du fichier XLSX
         st.subheader("Télécharger le tableau des répétitions")
-        xlsx_data = convert_df_to_xlsx(repetitions_t
+        xlsx_data = convert_df_to_xlsx(repetitions_tableau)
+        st.download_button(label="Télécharger en XLSX", data=xlsx_data, file_name="repetitions.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        
+        # Téléchargement du fichier PDF
+        st.subheader("Télécharger le tableau des répétitions en PDF")
+        pdf_filename = "repetitions.pdf"
+        generate_pdf(repetitions_tableau, pdf_filename)
+        with open(pdf_filename, "rb") as f:
+            st.download_button(label="Télécharger en PDF", data=f, file_name=pdf_filename, mime="application/pdf")
+    
+    # Option pour afficher toutes les données
+    if st.checkbox("Afficher toutes les données"):
+        st.dataframe(df_principal)
+
