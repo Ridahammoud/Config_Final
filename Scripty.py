@@ -3,52 +3,42 @@ import streamlit as st
 from datetime import datetime, timedelta
 import plotly.express as px
 from io import BytesIO
+import xlsxwriter
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 
+# Fonction de chargement des données
 @st.cache_data
 def charger_donnees(fichier):
     return pd.read_excel(fichier)
 
+# Fonction pour convertir un dataframe en fichier XLSX
 def convert_df_to_xlsx(df):
-    # Convert DataFrame to Excel using openpyxl
     output = BytesIO()
-    with pd.ExcelWriter(output, engine='openpyxl') as writer:
-        df.to_excel(writer, index=False, sheet_name="Sheet1")
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False, sheet_name='Sheet1')
     return output.getvalue()
 
-def convert_df_to_pdf(df):
-    # Convert DataFrame to PDF using ReportLab
-    output = BytesIO()
-    c = canvas.Canvas(output, pagesize=letter)
+# Fonction pour générer un PDF
+def generate_pdf(df, filename="tableau.pdf"):
+    c = canvas.Canvas(filename, pagesize=letter)
     width, height = letter
+    c.drawString(30, height - 40, "Tableau des répétitions des opérateurs")
     
-    # Set up table properties
-    x_offset = 30
-    y_offset = height - 50
-    row_height = 20
-    col_widths = [100, 100, 100, 100]  # adjust this for your columns
-    
-    # Header
-    c.setFont("Helvetica-Bold", 10)
-    columns = df.columns.tolist()
-    for i, col in enumerate(columns):
-        c.drawString(x_offset + col_widths[i] * i, y_offset, col)
-    
-    # Rows
-    c.setFont("Helvetica", 8)
-    y_offset -= row_height
-    for row in df.values.tolist():
-        for i, val in enumerate(row):
-            c.drawString(x_offset + col_widths[i] * i, y_offset, str(val))
-        y_offset -= row_height
+    y_position = height - 60
+    for i, row in df.iterrows():
+        text = f"{row['Prénom et nom']} : {row['Repetitions']}"
+        c.drawString(30, y_position, text)
+        y_position -= 20
     
     c.save()
-    return output.getvalue()
 
+# Configuration de la page Streamlit
 st.set_page_config(page_title="Analyse des Interventions", page_icon="📊", layout="wide")
+
 st.title("📊 Analyse des interventions des opérateurs")
 
+# Chargement du fichier Excel
 fichier_principal = st.file_uploader("Choisissez le fichier principal (donnee_Aesma.xlsx)", type="xlsx")
 
 if fichier_principal is not None:
@@ -57,76 +47,91 @@ if fichier_principal is not None:
     col1, col2 = st.columns([1, 2])
     
     with col1:
-        col_prenom_nom = 'Prénom et nom'  # Utilisation directe de la colonne 'Prénom et nom'
+        # Sélection de la colonne pour 'Prénom et nom' et de la colonne de date
+        col_prenom_nom = df_principal.columns[0]  # Sélection automatique de la première colonne
         col_date = st.selectbox("Choisissez la colonne de date", df_principal.columns)
         
-        # Utilisation de la colonne 'Prénom et nom' pour choisir les opérateurs
         operateurs = df_principal[col_prenom_nom].unique()
         operateurs_selectionnes = st.multiselect("Choisissez un ou plusieurs opérateurs", operateurs)
         
-        # Sélection des dates de début et de fin
-        date_min = pd.to_datetime(df_principal[col_date], errors='coerce').min().date()
-        date_max = pd.to_datetime(df_principal[col_date], errors='coerce').max().date()
+        periodes = ["Jour", "Semaine", "Mois", "Trimestre", "Année", "Total"]
+        periode_selectionnee = st.selectbox("Choisissez une période", periodes)
+        
+        date_min = pd.to_datetime(df_principal[col_date]).min().date()
+        date_max = pd.to_datetime(df_principal[col_date]).max().date()
+        
         debut_periode = st.date_input("Début de la période", min_value=date_min, max_value=date_max, value=date_min)
         fin_periode = st.date_input("Fin de la période", min_value=debut_periode, max_value=date_max, value=date_max)
-        
-        # Sélection de la période pour l'affichage
-        periodes = ["Jour", "Semaine", "Mois", "Trimestre", "Année"]
-        periode_selectionnee = st.selectbox("Choisissez la période d'affichage", periodes)
-
+    
+    # Quand le bouton "Analyser" est cliqué
     if st.button("Analyser"):
-        # Conversion des dates
-        df_principal[col_date] = pd.to_datetime(df_principal[col_date], errors='coerce')
+        df_principal[col_date] = pd.to_datetime(df_principal[col_date])
         df_principal['Jour'] = df_principal[col_date].dt.date
         df_principal['Semaine'] = df_principal[col_date].dt.to_period('W').astype(str)
         df_principal['Mois'] = df_principal[col_date].dt.to_period('M').astype(str)
         df_principal['Trimestre'] = df_principal[col_date].dt.to_period('Q').astype(str)
         df_principal['Année'] = df_principal[col_date].dt.year
 
-        # Filtrage des données en fonction des dates de début et de fin
-        df_graph = df_principal[(df_principal[col_date].dt.date >= debut_periode) & 
-                                (df_principal[col_date].dt.date <= fin_periode)]
+        # Filtrer les données pour la période sélectionnée
+        df_graph = df_principal[(df_principal[col_date].dt.date >= debut_periode) & (df_principal[col_date].dt.date <= fin_periode)]
 
-        # Regroupement des données selon la période choisie
+        # Choisir les colonnes pour grouper les données
         groupby_cols = [col_prenom_nom]
-        if periode_selectionnee != "Jour":
+        if periode_selectionnee != "Total":
             groupby_cols.append(periode_selectionnee)
         
+        # Calcul des répétitions pour le graphique
         repetitions_graph = df_graph[df_graph[col_prenom_nom].isin(operateurs_selectionnes)].groupby(groupby_cols).size().reset_index(name='Repetitions')
 
+        # Calcul des répétitions pour le tableau (toutes les dates)
+        repetitions_tableau = df_principal[df_principal[col_prenom_nom].isin(operateurs_selectionnes)].groupby(groupby_cols).size().reset_index(name='Repetitions')
+        
+        # Affichage du graphique avec les valeurs des répétitions et couleurs par opérateur
         with col2:
-            # Affichage du graphique avec les valeurs des répétitions
-            fig = px.bar(repetitions_graph, x=periode_selectionnee if periode_selectionnee != "Jour" else col_prenom_nom,
-                         y='Repetitions', title=f"Nombre de rapports d'intervention (du {debut_periode} au {fin_periode})")
+            fig = px.bar(repetitions_graph, 
+                         x=periode_selectionnee if periode_selectionnee != "Jour" else col_prenom_nom,
+                         y='Repetitions', 
+                         color=col_prenom_nom,  # Ajout de la colonne 'Prénom et nom' pour les couleurs
+                         title=f"Nombre de rapports d'intervention (du {debut_periode} au {fin_periode})")
             fig.update_traces(text=repetitions_graph['Repetitions'], textposition='outside')
             st.plotly_chart(fig)
         
-        st.subheader("Tableau du nombre des rapports d'interventions par opérateur")
-        st.dataframe(repetitions_graph, use_container_width=True)
+        # Affichage du tableau des répétitions
+        st.subheader(f"Tableau du nombre des rapports d'interventions par {periode_selectionnee.lower()} (toutes les dates)")
+        
+        colonnes_affichage = [col_prenom_nom, periode_selectionnee, 'Repetitions'] if periode_selectionnee != "Total" else [col_prenom_nom, 'Repetitions']
+        tableau_affichage = repetitions_tableau[colonnes_affichage]
+        
+        st.dataframe(tableau_affichage, use_container_width=True)
 
-        # Tirage au sort
+        # Tirage au sort pour deux lignes par opérateur
         st.subheader("Tirage au sort de deux lignes par opérateur")
-        df_filtre = df_principal[(df_principal[col_date].dt.date >= debut_periode) & 
-                                 (df_principal[col_date].dt.date <= fin_periode)]
+        df_filtre = df_principal[(df_principal[col_date].dt.date >= debut_periode) & (df_principal[col_date].dt.date <= fin_periode)]
         for operateur in operateurs_selectionnes:
             st.write(f"Tirage pour {operateur}:")
             df_operateur = df_filtre[df_filtre[col_prenom_nom] == operateur]
             lignes_tirees = df_operateur.sample(n=min(2, len(df_operateur)))
             if not lignes_tirees.empty:
-                st.dataframe(lignes_tirees, use_container_width=True)
+                # Affichage de la photo au lieu du lien
+                lignes_tirees['Photo'] = lignes_tirees['Photo'].apply(lambda x: f'<img src="{x}" width="100"/>')
+                st.dataframe(lignes_tirees.to_html(escape=False), use_container_width=True)
             else:
                 st.write("Pas de données disponibles pour cet opérateur dans la période sélectionnée.")
             st.write("---")
         
-        # Options pour télécharger les tableaux
-        st.subheader("Téléchargement des données")
-        # Télécharger le tableau en format Excel
-        xlsx_data = convert_df_to_xlsx(repetitions_graph)
-        st.download_button(label="Télécharger en format Excel", data=xlsx_data, file_name="repetitions.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-
-        # Télécharger le tableau en format PDF
-        pdf_data = convert_df_to_pdf(repetitions_graph)
-        st.download_button(label="Télécharger en format PDF", data=pdf_data, file_name="repetitions.pdf", mime="application/pdf")
-
+        # Téléchargement du fichier XLSX
+        st.subheader("Télécharger le tableau du nombre des rapports d'interventions")
+        xlsx_data = convert_df_to_xlsx(repetitions_tableau)
+        st.download_button(label="Télécharger en XLSX", data=xlsx_data, file_name="repetitions.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        
+        # Téléchargement du fichier PDF
+        st.subheader("Télécharger le tableau des répétitions en PDF")
+        pdf_filename = "repetitions.pdf"
+        generate_pdf(repetitions_tableau, pdf_filename)
+        with open(pdf_filename, "rb") as f:
+            st.download_button(label="Télécharger en PDF", data=f, file_name=pdf_filename, mime="application/pdf")
+    
+    # Option pour afficher toutes les données
     if st.checkbox("Afficher toutes les données"):
         st.dataframe(df_principal)
+
