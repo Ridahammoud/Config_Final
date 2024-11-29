@@ -87,17 +87,18 @@ if fichier_principal is not None:
         repetitions_tableau = df_principal[df_principal[col_prenom_nom].isin(operateurs_selectionnes)].groupby(groupby_cols).size().reset_index(name='Repetitions')
         
         # Affichage du graphique avec les valeurs des répétitions et couleurs par opérateur
-        with col2:
-            fig = px.bar(repetitions_graph, 
-                         x=periode_selectionnee if periode_selectionnee != "Jour" else col_prenom_nom,
-                         y='Repetitions', 
-                         color=col_prenom_nom,  # Ajout de la colonne 'Prénom et nom' pour les couleurs
-                         title=f"Nombre de rapports d'intervention (du {debut_periode} au {fin_periode})")
-            fig.update_traces(text=repetitions_graph['Repetitions'], textposition='outside')
+       with col2:
+            if periode_selectionnee != "Total":
+                fig = px.bar(repetitions_graph, x=periode_selectionnee, y='Repetitions', color=col_prenom_nom, barmode='group',
+                             title=f"Répétitions par {periode_selectionnee.lower()} pour les opérateurs sélectionnés (à partir de {debut_periode})")
+            else:
+                fig = px.bar(repetitions_graph, x=col_prenom_nom, y='Repetitions',
+                             title=f"Total des répétitions pour les opérateurs sélectionnés (à partir de {debut_periode})")
+            
             st.plotly_chart(fig)
-        
+            
         # Affichage du tableau des répétitions
-        st.subheader(f"Tableau des répétitions par {periode_selectionnee.lower()} (toutes les dates)")
+        st.subheader(f"Tableau du nombre des rapports d\'interventions par {periode_selectionnee.lower()} (toutes les dates)")
         
         colonnes_affichage = [col_prenom_nom, periode_selectionnee, 'Repetitions'] if periode_selectionnee != "Total" else [col_prenom_nom, 'Repetitions']
         tableau_affichage = repetitions_tableau[colonnes_affichage]
