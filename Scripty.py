@@ -69,6 +69,10 @@ if fichier_principal is not None:
         date_max = pd.to_datetime(df_principal[col_date], errors='coerce').max().date()
         debut_periode = st.date_input("Début de la période", min_value=date_min, max_value=date_max, value=date_min)
         fin_periode = st.date_input("Fin de la période", min_value=debut_periode, max_value=date_max, value=date_max)
+        
+        # Sélection de la période pour l'affichage
+        periodes = ["Jour", "Semaine", "Mois", "Trimestre", "Année"]
+        periode_selectionnee = st.selectbox("Choisissez la période d'affichage", periodes)
 
     if st.button("Analyser"):
         # Conversion des dates
@@ -83,13 +87,17 @@ if fichier_principal is not None:
         df_graph = df_principal[(df_principal[col_date].dt.date >= debut_periode) & 
                                 (df_principal[col_date].dt.date <= fin_periode)]
 
+        # Regroupement des données selon la période choisie
         groupby_cols = [col_prenom_nom]
+        if periode_selectionnee != "Jour":
+            groupby_cols.append(periode_selectionnee)
+        
         repetitions_graph = df_graph[df_graph[col_prenom_nom].isin(operateurs_selectionnes)].groupby(groupby_cols).size().reset_index(name='Repetitions')
 
         with col2:
             # Affichage du graphique avec les valeurs des répétitions
-            fig = px.bar(repetitions_graph, x=col_prenom_nom, y='Repetitions',
-                         title=f"Nombre de rapports d'intervention (du {debut_periode} au {fin_periode})")
+            fig = px.bar(repetitions_graph, x=periode_selectionnee if periode_selectionnee != "Jour" else col_prenom_nom,
+                         y='Repetitions', title=f"Nombre de rapports d'intervention (du {debut_periode} au {fin_periode})")
             fig.update_traces(text=repetitions_graph['Repetitions'], textposition='outside')
             st.plotly_chart(fig)
         
