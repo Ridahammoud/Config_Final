@@ -57,15 +57,27 @@ if fichier_principal is not None:
         periodes = ["Jour", "Semaine", "Mois", "Trimestre", "Année", "Total"]
         periode_selectionnee = st.selectbox("Choisissez une période", periodes)
         
-        date_min = pd.to_datetime(df_principal[col_date]).min().date()
-        date_max = pd.to_datetime(df_principal[col_date]).max().date()
+        # Tentative de conversion des dates avec gestion des erreurs
+        df_principal[col_date] = pd.to_datetime(df_principal[col_date], errors='coerce')
+        
+        # Gérer les dates invalides et définir les bornes min et max des dates valides
+        date_min = df_principal[col_date].min()
+        date_max = df_principal[col_date].max()
+
+        # Si les dates sont invalides, on avertit l'utilisateur
+        if pd.isna(date_min) or pd.isna(date_max):
+            st.warning("Certaines dates dans le fichier sont invalides. Elles ont été ignorées.")
+            date_min = date_max = None
         
         debut_periode = st.date_input("Début de la période", min_value=date_min, max_value=date_max, value=date_min)
         fin_periode = st.date_input("Fin de la période", min_value=debut_periode, max_value=date_max, value=date_max)
     
     # Quand le bouton "Analyser" est cliqué
     if st.button("Analyser"):
-        df_principal[col_date] = pd.to_datetime(df_principal[col_date])
+        # Filtrage des données pour garder seulement les dates valides
+        df_principal = df_principal.dropna(subset=[col_date])  # Suppression des lignes avec des dates invalides
+
+        # Ajout des périodes (Jour, Semaine, Mois, Trimestre, Année)
         df_principal['Jour'] = df_principal[col_date].dt.date
         df_principal['Semaine'] = df_principal[col_date].dt.to_period('W').astype(str)
         df_principal['Mois'] = df_principal[col_date].dt.to_period('M').astype(str)
@@ -135,4 +147,4 @@ if fichier_principal is not None:
     
     # Option pour afficher toutes les données
     if st.checkbox("Afficher toutes les données"):
-        st.dataframe(df_principal)
+        st.dataframe(df_principal
