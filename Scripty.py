@@ -132,14 +132,14 @@ if fichier_principal is not None:
             else:
                 st.write("Pas de données disponibles pour cet opérateur dans la période sélectionnée.")
             st.write("---")
-        
+                            
         # Téléchargement du fichier XLSX
-        st.subheader("Télécharger le tableau des répétitions")
+        st.subheader("Télécharger le tableau des rapports d'interventions")
         xlsx_data = convert_df_to_xlsx(repetitions_tableau)
-        st.download_button(label="Télécharger en XLSX", data=xlsx_data, file_name="repetitions.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        st.download_button(label="Télécharger en XLSX", data=xlsx_data, file_name="NombredesRapports.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
         
         # Téléchargement du fichier PDF
-        st.subheader("Télécharger le tableau des répétitions en PDF")
+        st.subheader("Télécharger le tableau des rapports d'interventions en PDF")
         pdf_filename = "repetitions.pdf"
         generate_pdf(repetitions_tableau, pdf_filename)
         with open(pdf_filename, "rb") as f:
