@@ -97,7 +97,7 @@ if fichier_principal is not None:
             st.plotly_chart(fig)
         
         # Affichage du tableau des répétitions
-        st.subheader(f"Tableau du nombre des rapports d'interventions par {periode_selectionnee.lower()} (toutes les dates)")
+        st.subheader(f"Tableau des répétitions par {periode_selectionnee.lower()} (toutes les dates)")
         
         colonnes_affichage = [col_prenom_nom, periode_selectionnee, 'Repetitions'] if periode_selectionnee != "Total" else [col_prenom_nom, 'Repetitions']
         tableau_affichage = repetitions_tableau[colonnes_affichage]
@@ -114,24 +114,12 @@ if fichier_principal is not None:
             if not lignes_tirees.empty:
                 # Affichage de la photo au lieu du lien
                 lignes_tirees['Photo'] = lignes_tirees['Photo'].apply(lambda x: f'<img src="{x}" width="100"/>')
-                st.dataframe(lignes_tirees.to_html(escape=False), use_container_width=True)
+                # Utiliser markdown pour afficher les images en HTML
+                st.markdown(lignes_tirees.to_html(escape=False), unsafe_allow_html=True)
             else:
                 st.write("Pas de données disponibles pour cet opérateur dans la période sélectionnée.")
             st.write("---")
         
         # Téléchargement du fichier XLSX
-        st.subheader("Télécharger le tableau du nombre des rapports d'interventions")
-        xlsx_data = convert_df_to_xlsx(repetitions_tableau)
-        st.download_button(label="Télécharger en XLSX", data=xlsx_data, file_name="repetitions.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-        
-        # Téléchargement du fichier PDF
-        st.subheader("Télécharger le tableau des répétitions en PDF")
-        pdf_filename = "repetitions.pdf"
-        generate_pdf(repetitions_tableau, pdf_filename)
-        with open(pdf_filename, "rb") as f:
-            st.download_button(label="Télécharger en PDF", data=f, file_name=pdf_filename, mime="application/pdf")
-    
-    # Option pour afficher toutes les données
-    if st.checkbox("Afficher toutes les données"):
-        st.dataframe(df_principal)
-
+        st.subheader("Télécharger le tableau des répétitions")
+        xlsx_data = convert_df_to_xlsx(repetitions_t
