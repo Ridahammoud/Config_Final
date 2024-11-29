@@ -60,8 +60,8 @@ if fichier_principal is not None:
         col_prenom_nom = 'Prénom et nom'  # Directly using the column name "Prénom et nom"
         col_date = st.selectbox("Choisissez la colonne de date", df_principal.columns)
         
-        operateurs = df_principal['Opérateur'].unique()
-        operateurs_selectionnes = st.multiselect("Choisissez un ou plusieurs opérateurs", operateurs)
+        # Sélection des "Prénom et nom" (au lieu des opérateurs)
+        noms_selectionnes = st.multiselect("Choisissez un ou plusieurs Prénoms et noms", df_principal[col_prenom_nom].unique())
         
         periodes = ["Jour", "Semaine", "Mois", "Trimestre", "Année", "Total"]
         periode_selectionnee = st.selectbox("Choisissez une période", periodes)
@@ -86,10 +86,10 @@ if fichier_principal is not None:
         if periode_selectionnee != "Total":
             groupby_cols.append(periode_selectionnee)
         
-        repetitions_graph = df_graph[df_graph[col_prenom_nom].isin(operateurs_selectionnes)].groupby(groupby_cols).size().reset_index(name='Repetitions')
+        repetitions_graph = df_graph[df_graph[col_prenom_nom].isin(noms_selectionnes)].groupby(groupby_cols).size().reset_index(name='Repetitions')
         
         # Calcul des répétitions pour le tableau (toutes les dates)
-        repetitions_tableau = df_principal[df_principal[col_prenom_nom].isin(operateurs_selectionnes)].groupby(groupby_cols).size().reset_index(name='Repetitions')
+        repetitions_tableau = df_principal[df_principal[col_prenom_nom].isin(noms_selectionnes)].groupby(groupby_cols).size().reset_index(name='Repetitions')
 
         # Ajouter la colonne 'Opérateur' en recherchant la correspondance avec 'Prénom et nom'
         repetitions_tableau = repetitions_tableau.merge(df_principal[['Prénom et nom', 'Opérateur']].drop_duplicates(),
@@ -100,10 +100,10 @@ if fichier_principal is not None:
             # Afficher le graphique avec les répétitions
             if periode_selectionnee != "Total":
                 fig = px.bar(repetitions_graph, x=periode_selectionnee, y='Repetitions', color=col_prenom_nom, barmode='group',
-                             title=f"Nombre de rapports d'intervention par {periode_selectionnee.lower()} pour les opérateurs sélectionnés (de {debut_periode} à {fin_periode})")
+                             title=f"Nombre de rapports d'intervention par {periode_selectionnee.lower()} pour les Prénoms et noms sélectionnés (de {debut_periode} à {fin_periode})")
             else:
                 fig = px.bar(repetitions_graph, x=col_prenom_nom, y='Repetitions',
-                             title=f"Total des rapports d'intervention pour les opérateurs sélectionnés (de {debut_periode} à {fin_periode})")
+                             title=f"Total des rapports d'intervention pour les Prénoms et noms sélectionnés (de {debut_periode} à {fin_periode})")
             
             # Afficher les valeurs dans le graphique
             fig.update_traces(texttemplate='%{y}', textposition='outside')
@@ -117,16 +117,16 @@ if fichier_principal is not None:
         st.dataframe(tableau_affichage, use_container_width=True)
         
         # Tirage au sort
-        st.subheader("Tirage au sort de deux lignes par opérateur")
+        st.subheader("Tirage au sort de deux lignes par Prénom et nom")
         df_filtre = df_principal[(df_principal[col_date].dt.date >= debut_periode) & (df_principal[col_date].dt.date <= fin_periode)]
-        for operateur in operateurs_selectionnes:
-            st.write(f"Tirage pour {operateur}:")
-            df_operateur = df_filtre[df_filtre[col_prenom_nom] == operateur]
-            lignes_tirees = df_operateur.sample(n=min(2, len(df_operateur)))
+        for prenom_nom in noms_selectionnes:
+            st.write(f"Tirage pour {prenom_nom}:")
+            df_prenom_nom = df_filtre[df_filtre[col_prenom_nom] == prenom_nom]
+            lignes_tirees = df_prenom_nom.sample(n=min(2, len(df_prenom_nom)))
             if not lignes_tirees.empty:
                 st.dataframe(lignes_tirees, use_container_width=True)
             else:
-                st.write("Pas de données disponibles pour cet opérateur dans la période sélectionnée.")
+                st.write("Pas de données disponibles pour ce Prénom et nom dans la période sélectionnée.")
             st.write("---")
 
         # Téléchargement des données sous format Excel
