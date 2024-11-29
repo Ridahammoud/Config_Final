@@ -48,7 +48,7 @@ if fichier_principal is not None:
     
     with col1:
         # Sélection de la colonne pour 'Prénom et nom' et de la colonne de date
-        col_prenom_nom = df_principal.columns[0]  # Sélection automatique de la première colonne
+        col_prenom_nom = df_principal.columns[4]  # Sélection automatique de la première colonne
         col_date = st.selectbox("Choisissez la colonne de date", df_principal.columns)
         
         operateurs = df_principal[col_prenom_nom].unique()
