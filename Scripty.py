@@ -127,6 +127,7 @@ if fichier_principal is not None:
             if not lignes_tirees.empty:
                 # Affichage de la photo au lieu du lien
                 lignes_tirees['Photo'] = lignes_tirees['Photo'].apply(lambda x: f'<img src="{x}" width="100"/>')
+                lignes_tirees['Photo 2'] = lignes_tirees['Photo 2'].apply(lambda x: f'<img src="{x}" width="100"/>')
                 # Utiliser markdown pour afficher les images en HTML
                 st.markdown(lignes_tirees.to_html(escape=False), unsafe_allow_html=True)
             else:
