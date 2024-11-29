@@ -5,3 +5,4 @@ datetime
 plotly
 openpyxl
 reportlab
+xlsxwriter
