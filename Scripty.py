@@ -87,7 +87,7 @@ if fichier_principal is not None:
         repetitions_tableau = df_principal[df_principal[col_prenom_nom].isin(operateurs_selectionnes)].groupby(groupby_cols).size().reset_index(name='Repetitions')
         
         # Affichage du graphique avec les valeurs des répétitions et couleurs par opérateur
-     with co12:
+     with col2:
             if periode_selectionnee != "Total":
                 fig = px.bar(repetitions_graph, x=periode_selectionnee, y='Repetitions', color=col_prenom_nom, barmode='group',
                              title=f"Répétitions par {periode_selectionnee.lower()} pour les opérateurs sélectionnés (à partir de {debut_periode})")
