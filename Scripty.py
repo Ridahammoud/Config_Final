@@ -6,7 +6,6 @@ from io import BytesIO
 import base64
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-import os
 
 @st.cache_data
 def charger_donnees(fichier):
@@ -92,8 +91,8 @@ if fichier_principal is not None:
         # Calcul des répétitions pour le tableau (toutes les dates)
         repetitions_tableau = df_principal[df_principal[col_prenom_nom].isin(operateurs_selectionnes)].groupby(groupby_cols).size().reset_index(name='Repetitions')
 
-        # Ajouter la colonne 'Opérateur' au tableau
-        repetitions_tableau = repetitions_tableau.merge(df_principal[['Prénom et nom', 'Opérateur']].drop_duplicates(), 
+        # Ajouter la colonne 'Opérateur' en recherchant la correspondance avec 'Prénom et nom'
+        repetitions_tableau = repetitions_tableau.merge(df_principal[['Prénom et nom', 'Opérateur']].drop_duplicates(),
                                                          on='Prénom et nom', 
                                                          how='left')
 
