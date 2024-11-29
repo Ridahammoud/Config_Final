@@ -109,7 +109,7 @@ if fichier_principal is not None:
             fig.update_traces(texttemplate='%{y}', textposition='outside')
             st.plotly_chart(fig)
         
-        st.subheader(f"Tableau des répétitions par {periode_selectionnee.lower()} (de toutes les dates)")
+        st.subheader(f"Tableau des rapports d'interventions par {periode_selectionnee.lower()} (de toutes les dates)")
 
         colonnes_affichage = [col_prenom_nom, periode_selectionnee, 'Repetitions', 'Opérateur'] if periode_selectionnee != "Total" else [col_prenom_nom, 'Repetitions', 'Opérateur']
         tableau_affichage = repetitions_tableau[colonnes_affichage]
