@@ -75,10 +75,8 @@ if fichier_principal is not None:
     # Quand le bouton "Analyser" est cliqué
     if st.button("Analyser"):
         # Filtrage des données pour garder seulement les dates valides
-        valid_dates_df = df_principal.dropna(subset=[col_date])
-        if len(df_principal) != len(valid_dates_df):
-            st.warning(f"{len(df_principal) - len(valid_dates_df)} lignes avec des dates invalides ont été ignorées.")
-        
+        df_principal = df_principal.dropna(subset=[col_date])  # Suppression des lignes avec des dates invalides
+
         # Ajout des périodes (Jour, Semaine, Mois, Trimestre, Année)
         df_principal['Jour'] = df_principal[col_date].dt.date
         df_principal['Semaine'] = df_principal[col_date].dt.to_period('W').astype(str)
@@ -97,10 +95,6 @@ if fichier_principal is not None:
         # Calcul des répétitions pour le graphique
         repetitions_graph = df_graph[df_graph[col_prenom_nom].isin(operateurs_selectionnes)].groupby(groupby_cols).size().reset_index(name='Repetitions')
 
-        # Limiter le nombre de données affichées dans le graphique si trop volumineux
-        if len(repetitions_graph) > 100:
-            repetitions_graph = repetitions_graph.sample(n=100)
-        
         # Calcul des répétitions pour le tableau (toutes les dates)
         repetitions_tableau = df_principal[df_principal[col_prenom_nom].isin(operateurs_selectionnes)].groupby(groupby_cols).size().reset_index(name='Repetitions')
         
@@ -115,15 +109,6 @@ if fichier_principal is not None:
             fig.update_traces(text=repetitions_graph['Repetitions'], textposition='outside')
             st.plotly_chart(fig)
 
-            # Calcul de la moyenne totale par période
-            moyenne_totale = repetitions_graph['Repetitions'].mean()
-            st.write(f"### Moyenne totale par période : {moyenne_totale:.2f}")
-            
-            # Calcul de la moyenne par période et par opérateur
-            moyenne_par_operateur = repetitions_graph.groupby([periode_selectionnee, col_prenom_nom])['Repetitions'].mean().reset_index()
-            st.write("### Moyenne par période et par opérateur :")
-            st.dataframe(moyenne_par_operateur, use_container_width=True)
-
         # Affichage du tableau des répétitions
         st.subheader(f"Tableau du nombre des rapports d'intervention par {periode_selectionnee.lower()} (toutes les dates)")
         
@@ -132,28 +117,36 @@ if fichier_principal is not None:
         
         st.dataframe(tableau_affichage, use_container_width=True)
         
+
         # Tirage au sort pour deux lignes par opérateur
         st.subheader("Tirage au sort de deux lignes par opérateur")
         df_filtre = df_principal[(df_principal[col_date].dt.date >= debut_periode) & (df_principal[col_date].dt.date <= fin_periode)]
-        
         for operateur in operateurs_selectionnes:
             st.write(f"Tirage pour {operateur}:")
             df_operateur = df_filtre[df_filtre[col_prenom_nom] == operateur]
             lignes_tirees = df_operateur.sample(n=min(2, len(df_operateur)))
             if not lignes_tirees.empty:
-                # Vérification de la validité des URLs des photos
-                if pd.notna(lignes_tirees['Photo']).all() and pd.notna(lignes_tirees['Photo 2']).all():
-                    lignes_tirees['Photo'] = lignes_tirees['Photo'].apply(lambda x: f'<img src="{x}" width="100"/>')
-                    lignes_tirees['Photo 2'] = lignes_tirees['Photo 2'].apply(lambda x: f'<img src="{x}" width="100"/>')
-                    st.markdown(lignes_tirees.to_html(escape=False), unsafe_allow_html=True)
-                else:
-                    st.warning("Certaines photos ne sont pas valides ou manquantes.")
+                # Affichage de la photo au lieu du lien
+                lignes_tirees['Photo'] = lignes_tirees['Photo'].apply(lambda x: f'<img src="{x}" width="100"/>')
+                lignes_tirees['Photo 2'] = lignes_tirees['Photo 2'].apply(lambda x: f'<img src="{x}" width="100"/>')
+                # Utiliser markdown pour afficher les images en HTML
+                st.markdown(lignes_tirees.to_html(escape=False), unsafe_allow_html=True)
             else:
                 st.write("Pas de données disponibles pour cet opérateur dans la période sélectionnée.")
             st.write("---")
                             
-
         # Téléchargement du fichier XLSX
         st.subheader("Télécharger le tableau des rapports d'interventions")
         xlsx_data = convert_df_to_xlsx(repetitions_tableau)
-        st.download_button(label="Télécharger en XLSX", data=xlsx_data, file
+        st.download_button(label="Télécharger en XLSX", data=xlsx_data, file_name="NombredesRapports.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+        
+        # Téléchargement du fichier PDF
+        st.subheader("Télécharger le tableau des rapports d'interventions en PDF")
+        pdf_filename = "repetitions.pdf"
+        generate_pdf(repetitions_tableau, pdf_filename)
+        with open(pdf_filename, "rb") as f:
+            st.download_button(label="Télécharger en PDF", data=f, file_name=pdf_filename, mime="application/pdf")
+    
+    # Option pour afficher toutes les données
+    if st.checkbox("Afficher toutes les données"):
+        st.dataframe(df_principal)  # Parenthèse fermée correctement ici
