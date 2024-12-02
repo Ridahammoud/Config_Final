@@ -108,6 +108,19 @@ if fichier_principal is not None:
                          title=f"Nombre de rapports d'intervention (du {debut_periode} au {fin_periode})")
             fig.update_traces(text=repetitions_graph['Repetitions'], textposition='outside')
             st.plotly_chart(fig)
+
+
+        # Filtrer les données pour la période sélectionnée
+        moy_Mensuel = df_principal.groupby(['Prénom et nom']).mean('Repetitions_Mois')
+        moy_total = moy_Mensuel['Repetitions_Mois'].mean()
+
+        # La moyenne Total annuelle 
+
+        st.subheader(f"La Moyenne Mensuelle Total est : {moy_total}")
+        # Afficher la moyenne mensuelle et la moyenne de chaque opérateur
+
+        st.subheader(f"Moyenne Mensuelle de {col_prenom_nom}")
+        st.dataframe(moy_Mensuel, use_container_width=True)
         
         # Affichage du tableau des répétitions
         st.subheader(f"Tableau du nombre des rapports d'intervention par {periode_selectionnee.lower()} (toutes les dates)")
@@ -116,6 +129,7 @@ if fichier_principal is not None:
         tableau_affichage = repetitions_tableau[colonnes_affichage]
         
         st.dataframe(tableau_affichage, use_container_width=True)
+        
 
         # Tirage au sort pour deux lignes par opérateur
         st.subheader("Tirage au sort de deux lignes par opérateur")
