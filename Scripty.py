@@ -115,6 +115,15 @@ if fichier_principal is not None:
             fig.update_traces(text=repetitions_graph['Repetitions'], textposition='outside')
             st.plotly_chart(fig)
 
+            # Calcul de la moyenne totale par période
+            moyenne_totale = repetitions_graph['Repetitions'].mean()
+            st.write(f"### Moyenne totale par période : {moyenne_totale:.2f}")
+            
+            # Calcul de la moyenne par période et par opérateur
+            moyenne_par_operateur = repetitions_graph.groupby([periode_selectionnee, col_prenom_nom])['Repetitions'].mean().reset_index()
+            st.write("### Moyenne par période et par opérateur :")
+            st.dataframe(moyenne_par_operateur, use_container_width=True)
+
         # Affichage du tableau des répétitions
         st.subheader(f"Tableau du nombre des rapports d'intervention par {periode_selectionnee.lower()} (toutes les dates)")
         
@@ -147,15 +156,4 @@ if fichier_principal is not None:
         # Téléchargement du fichier XLSX
         st.subheader("Télécharger le tableau des rapports d'interventions")
         xlsx_data = convert_df_to_xlsx(repetitions_tableau)
-        st.download_button(label="Télécharger en XLSX", data=xlsx_data, file_name="NombredesRapports.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
-        
-        # Téléchargement du fichier PDF
-        st.subheader("Télécharger le tableau des rapports d'interventions en PDF")
-        pdf_filename = "repetitions.pdf"
-        generate_pdf(repetitions_tableau, pdf_filename)
-        with open(pdf_filename, "rb") as f:
-            st.download_button(label="Télécharger en PDF", data=f, file_name=pdf_filename, mime="application/pdf")
-    
-    # Option pour afficher toutes les données
-    if st.checkbox("Afficher toutes les données"):
-        st.dataframe(df_principal
+        st.download_button(label="Télécharger en XLSX", data=xlsx_data, file
