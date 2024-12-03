@@ -47,9 +47,14 @@ if fichier_principal is not None:
         col_date = st.selectbox("Choisissez la colonne de date", df_principal.columns)
         
         operateurs = df_principal[col_prenom_nom].unique()
+        operateurs.append("Total")  # Ajout de l'option "Total"
         operateurs_selectionnes = st.multiselect("Choisissez un ou plusieurs opérateurs", operateurs)
         
-        periodes = ["Jour", "Semaine", "Mois", "Trimestre", "Année", "Total"]
+        # Si "Total" est sélectionné, on inclut tous les opérateurs
+        if "Total" in operateurs_selectionnes:
+            operateurs_selectionnes = df_principal[col_prenom_nom].unique().tolist()  # Utilise tous les opérateurs disponibles
+        
+        periodes = ["Jour", "Semaine", "Mois", "Trimestre", "Année"]
         periode_selectionnee = st.selectbox("Choisissez une période", periodes)
         
         df_principal[col_date] = pd.to_datetime(df_principal[col_date], errors='coerce')
