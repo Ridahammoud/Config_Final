@@ -112,7 +112,9 @@ if fichier_principal is not None:
                          title=f"Nombre de rapports d'intervention (du {debut_periode} au {fin_periode})")
             fig.update_traces(text=repetitions_graph['Repetitions'], textposition='outside')
             st.plotly_chart(fig)
-
+            st.write("Données utilisées pour le graphique :")
+            st.write(repetitions_graph)
+            
         # Calcul et affichage des moyennes mensuelles
         st.subheader("Moyennes mensuelles")
         df_mensuel = df_principal[df_principal[col_prenom_nom].isin(operateurs_selectionnes)].groupby([col_prenom_nom, df_principal[col_date].dt.to_period('M')]).size().reset_index(name='Repetitions')
