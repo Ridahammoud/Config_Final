@@ -120,19 +120,32 @@ if fichier_principal is not None:
         df_mensuel = df_principal[df_principal[col_prenom_nom].isin(operateurs_selectionnes)].groupby([col_prenom_nom, df_principal[col_date].dt.to_period('M')]).size().reset_index(name='Repetitions')
         moyennes_mensuelles = df_mensuel.groupby(col_prenom_nom)['Repetitions'].mean().reset_index()
         moyennes_mensuelles = moyennes_mensuelles.sort_values('Repetitions', ascending=False)
-        
-        moyenne_totale = moyennes_mensuelles['Repetitions'].mean()
-        st.write(f"Moyenne mensuelle totale : {moyenne_totale:.2f}")
-        
-        st.write("Moyennes mensuelles par opérateur :")
-        st.dataframe(moyennes_mensuelles)
-        
-        st.write("Top 5 des moyennes mensuelles maximales :")
-        st.dataframe(moyennes_mensuelles.head())
-        
-        st.write("5 moyennes mensuelles minimales :")
-        st.dataframe(moyennes_mensuelles.tail())
 
+        # Après le calcul des moyennes mensuelles
+
+     st.subheader("Moyennes mensuelles")
+     df_mensuel = df_principal[df_principal[col_prenom_nom].isin(operateurs_selectionnes)].groupby([col_prenom_nom, df_principal[col_date].dt.to_period('M')]).size().reset_index(name='Repetitions')
+     moyennes_mensuelles = df_mensuel.groupby(col_prenom_nom)['Repetitions'].mean().reset_index()
+     moyennes_mensuelles = moyennes_mensuelles.sort_values('Repetitions', ascending=False)
+
+     moyenne_totale = moyennes_mensuelles['Repetitions'].mean()
+     st.write(f"Moyenne mensuelle totale : {moyenne_totale:.2f}")
+
+     # Création de trois colonnes pour afficher les tableaux côte à côte
+     col4, col5, col6 = st.columns(3)
+
+     with col4:
+         st.write("Moyennes mensuelles par opérateur :")
+         st.dataframe(moyennes_mensuelles)
+
+     with col5:
+         st.write("Top 5 des moyennes mensuelles maximales :")
+         st.dataframe(moyennes_mensuelles.head())
+
+     with col6:
+         st.write("5 moyennes mensuelles minimales :")
+         st.dataframe(moyennes_mensuelles.tail())
+        
         # Affichage du tableau des répétitions
         st.subheader(f"Tableau du nombre des rapports d'intervention par {periode_selectionnee.lower()} (toutes les dates)")
         
@@ -140,8 +153,8 @@ if fichier_principal is not None:
         tableau_affichage = repetitions_tableau[colonnes_affichage]
         
         st.dataframe(tableau_affichage, use_container_width=True)
-        
 
+        
         # Tirage au sort pour deux lignes par opérateur
         st.subheader("Tirage au sort de deux lignes par opérateur")
         df_filtre = df_principal[(df_principal[col_date].dt.date >= debut_periode) & (df_principal[col_date].dt.date <= fin_periode)]
