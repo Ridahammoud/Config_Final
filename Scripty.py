@@ -46,7 +46,7 @@ if fichier_principal is not None:
         col_prenom_nom = df_principal.columns[4]
         col_date = st.selectbox("Choisissez la colonne de date", df_principal.columns)
         
-        operateurs = df_principal[col_prenom_nom].unique()
+        operateurs = df_principal[col_prenom_nom].unique().tolist()
         operateurs.append("Total")  # Ajout de l'option "Total"
         operateurs_selectionnes = st.multiselect("Choisissez un ou plusieurs opérateurs", operateurs)
         
