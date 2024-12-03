@@ -10,7 +10,11 @@ from reportlab.pdfgen import canvas
 # Fonction de chargement des données
 @st.cache_data
 def charger_donnees(fichier):
-    return pd.read_excel(fichier)
+    try:
+        return pd.read_excel(fichier)
+    except Exception as e:
+        st.error(f"Erreur lors du chargement du fichier : {str(e)}")
+        return None
 
 # Fonction pour convertir un dataframe en fichier XLSX
 def convert_df_to_xlsx(df):
@@ -109,6 +113,24 @@ if fichier_principal is not None:
             fig.update_traces(text=repetitions_graph['Repetitions'], textposition='outside')
             st.plotly_chart(fig)
 
+        # Calcul et affichage des moyennes mensuelles
+        st.subheader("Moyennes mensuelles")
+        df_mensuel = df_principal[df_principal[col_prenom_nom].isin(operateurs_selectionnes)].groupby([col_prenom_nom, df_principal[col_date].dt.to_period('M')]).size().reset_index(name='Repetitions')
+        moyennes_mensuelles = df_mensuel.groupby(col_prenom_nom)['Repetitions'].mean().reset_index()
+        moyennes_mensuelles = moyennes_mensuelles.sort_values('Repetitions', ascending=False)
+        
+        moyenne_totale = moyennes_mensuelles['Repetitions'].mean()
+        st.write(f"Moyenne mensuelle totale : {moyenne_totale:.2f}")
+        
+        st.write("Moyennes mensuelles par opérateur :")
+        st.dataframe(moyennes_mensuelles)
+        
+        st.write("Top 5 des moyennes mensuelles maximales :")
+        st.dataframe(moyennes_mensuelles.head())
+        
+        st.write("5 moyennes mensuelles minimales :")
+        st.dataframe(moyennes_mensuelles.tail())
+
         # Affichage du tableau des répétitions
         st.subheader(f"Tableau du nombre des rapports d'intervention par {periode_selectionnee.lower()} (toutes les dates)")
         
@@ -149,4 +171,4 @@ if fichier_principal is not None:
     
     # Option pour afficher toutes les données
     if st.checkbox("Afficher toutes les données"):
-        st.dataframe(df_principal)  # Parenthèse fermée correctement ici
+        st.dataframe(df_principal)
